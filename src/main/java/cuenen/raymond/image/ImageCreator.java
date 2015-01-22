@@ -45,10 +45,10 @@ public class ImageCreator {
      * @param seed The seed for the random generator or {@link #RANDOMSEED}.
      */
     public ImageCreator(String imageFile, long seed) {
-        final RandomNumberGenerator rand = new RandomNumberGenerator(seed == RANDOMSEED
-                ? new Random(System.currentTimeMillis()).nextLong() : seed);
-        final long num = rand.seed();
-        System.out.println("Using random seed: " + num);
+        if (seed == RANDOMSEED) {
+            seed = new Random(System.currentTimeMillis()).nextInt(Integer.MAX_VALUE);
+            System.out.println("Using random seed: " + seed);
+        }
         try {
             System.out.println("Reading source image");
             final BufferedImage src = GraphicsUtilities.loadCompatibleImage(new File(imageFile).toURI().toURL());
@@ -56,7 +56,7 @@ public class ImageCreator {
                     src.getHeight(), BufferedImage.TYPE_INT_ARGB);
             System.out.println("Scramble image");
             RasterCreator.scramble(seed, src.getData(), dst.getRaster());
-            saveImage(imageFile, num, dst);
+            saveImage(imageFile, seed, dst);
             System.out.println("Done");
         } catch (IOException ex) {
             System.err.println("Error: " + ex.getMessage());
@@ -78,7 +78,7 @@ public class ImageCreator {
             final String type = "png";
             final String name = imgName.substring(0, index) + "." + type;
             final File imageFile = new File(name);
-            System.out.println("Save image as: " + type);
+            System.out.println("Save image as: " + name);
             try {
                 final ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
                 final ImageWriteParam writeParam = writer.getDefaultWriteParam();
@@ -120,6 +120,9 @@ public class ImageCreator {
         if (args.length > 1) {
             try {
                 seed = Long.parseLong(args[1]);
+                if (seed < 0) {
+                    throw new NumberFormatException();
+                }
                 System.out.println("Seed from command line: " + seed);
             } catch (NumberFormatException ex) {
             }
